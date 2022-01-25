@@ -130,7 +130,7 @@ popd
 sudo DEBIAN_FRONTEND=noninteractive \
      apt-get install -y opam m4 libgmp-dev
 
-opam init -y
+opam init --disable-sandboxing -y
 eval "$(opam env)"
 # Opam 1.x doesn't have "create", later versions require it but only the first time
 if opam --version | grep '^1.' >/dev/null ; then
@@ -158,7 +158,10 @@ opam install goblint-cil core -y
 # ======
 
 sudo DEBIAN_FRONTEND=noninteractive \
-     apt-get install -y python3.6
+     apt-get install -y python3.6 python3-pip
+
+sudo DEBIAN_FRONTEND=noninteractive \
+     pip3 install numpy scapy
 
 
 
@@ -403,8 +406,13 @@ sudo apt-get install -y --no-install-recommends \
                      liblablgtk2-ocaml-dev liblablgtksourceview2-ocaml-dev
 # Not mentioned by VeriFast's readme, required anyway
 opam install ocamlfind camlp4 -y
+
+# For some reason this was breaking our vagranfile provision.
+# We removed it, and couldn't see any visible repercussions.
+#           |
+#           V
 # VFIDE dependency
-opam install lablgtk -y
+#opam install lablgtk -y
 
 if [ ! -e "$BUILDDIR/verifast" ]; then
   git clone --depth 1 https://github.com/vigor-nf/verifast "$BUILDDIR/verifast"
@@ -488,6 +496,61 @@ if [ ! -e "$BUILDDIR/libr3s" ]; then
     pushd build
       ../build.sh
       echo "export R3S_DIR=$BUILDDIR/libr3s" >> "$PATHSFILE"
+      . "$PATHSFILE"
+    popd
+  popd
+fi
+
+# ===============
+# Synapse runtime
+# ===============
+
+if [ ! -e "$BUILDDIR/synapse-runtime" ]; then
+  # protobuf dependencies
+  sudo apt-get install -y autoconf automake libtool curl make g++ unzip cmake
+
+  # protobuf
+  git clone https://github.com/protocolbuffers/protobuf.git --recursive "$BUILDDIR/protobuf"
+  pushd "$BUILDDIR/protobuf"
+    ./autogen.sh
+    ./configure
+    make
+    sudo make install
+    sudo ldconfig
+    
+    echo "export PROTOBUF_DIR=$BUILDDIR/protobuf" >> "$PATHSFILE"
+    . "$PATHSFILE"
+  popd
+
+  # gRPC C++
+  git clone https://github.com/grpc/grpc.git --recursive "$BUILDDIR/grpc"
+  pushd "$BUILDDIR/grpc"
+    mkdir -p cmake/build
+    pushd cmake/build
+      cmake ../.. -DgRPC_INSTALL=ON \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DgRPC_PROTOBUF_PROVIDER=package \
+                  -DgRPC_ABSL_PROVIDER=module \
+                  -DBUILD_SHARED_LIBS=ON
+      make
+      sudo make install
+      sudo ldconfig
+      sudo cp -r ../../third_party/abseil-cpp/absl /usr/local/include # abominable
+
+      echo "export GRPC_DIR=$BUILDDIR/grpc" >> "$PATHSFILE"
+      . "$PATHSFILE"
+    popd
+  popd
+
+  git clone https://github.com/joaomtiago/synapse-runtime.git "$BUILDDIR/synapse-runtime"
+  pushd "$BUILDDIR/synapse-runtime"
+    mkdir -p build
+    pushd build
+      cmake ..
+      make
+      sudo make install
+
+      echo "export SYNAPSE_RUNTIME_DIR=$BUILDDIR/synapse-runtime" >> "$PATHSFILE"
       . "$PATHSFILE"
     popd
   popd

@@ -23,6 +23,7 @@ fullpage.sty
 *.bin
 *.d
 *.cmd
+*.tmp
 build/
 TAGS
 .vagrant
@@ -36,3 +37,6 @@ klee-last
 .vscode/*
 *.vfmanifest
 fspec_gen.ml
+__pycache__
+Makefile.nf
+*.pcap

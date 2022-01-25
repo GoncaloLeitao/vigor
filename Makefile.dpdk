@@ -31,13 +31,14 @@ ifneq (true,$(NF_NO_BASE))
 SRCS-y := $(shell echo $(SELF_DIR)/nf*.c)
 endif
 SRCS-y += $(shell echo $(SELF_DIR)/libvig/verified/*.c)
+SRCS-y += $(shell find $(SELF_DIR)/libvig/unverified -name "*.c" ! -name "*tm*" ! -name "*locks*" -printf "%p ")
 SRCS-y += $(NF_FILES)
 # Compiler flags
 CFLAGS += -I $(SELF_DIR)
 CFLAGS += -std=gnu11
 CFLAGS += -DCAPACITY_POW2
 CFLAGS += -O3
-#CFLAGS += -O0 -g -rdynamic -DENABLE_LOG -Wfatal-errors
+# CFLAGS += -O0 -g -rdynamic -DENABLE_LOG -Wfatal-errors
 
 # GCC optimizes a checksum check in rte_ip.h into a CMOV, which is a very poor choice
 # that causes 99th percentile latency to go through the roof;
@@ -186,9 +187,10 @@ VERIF_DEFS += -DSTUB_DEVICES_COUNT=$(NF_DEVICES)
 # NF base
 VERIF_FILES := $(SELF_DIR)/nf*.c
 # Specific NF
-VERIF_FILES += $(NF_FILES) loop.c
+VERIF_FILES += $(NF_FILES) *loop.c
 # Models
 VERIF_FILES += $(SELF_DIR)/libvig/models/verified/*.c \
+               $(SELF_DIR)/libvig/models/unverified/*.c \
                $(SELF_DIR)/libvig/models/externals/*.c
 
 # The only thing we don't put in variables is the DPDK model headers,
@@ -384,19 +386,3 @@ new-nf:
 	 mkdir vig$${name}; \
 	 cp template/* vig$${name}/.; \
 	 echo "Go to the vig$${name} folder, and check out the comments in each file."
-
-
-# ==============
-# Parallelize NF
-# ==============
-
-change-srcs:
-	@echo "before..."
-	SRCS-y   = $(shell echo $(SELF_DIR)/libvig/verified/*.c)
-	NF_FILES = vignop/build/parallelize/boilerplate.c
-	$(info $(NF_FILES))
-	SRCS-y   += $(NF_FILES)
-	$(info $(SRCS-y))
-	@echo "after"
-
-parallelize: change-srcs all

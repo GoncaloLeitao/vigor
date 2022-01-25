@@ -10,6 +10,6 @@ struct tcpudp_hdr {
 #ifdef _NO_VERIFAST_
 __attribute__((__packed__)) // VeriFast does not understand attributes
 #endif                      //_NO_VERIFAST_
-;
+    ;
 
 #endif //_TCPUDP_H_INCLUDED_
