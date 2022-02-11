@@ -18,6 +18,8 @@ int nf_process(uint16_t device, uint8_t **buffer, uint16_t packet_length,
   // we just send all packets from LAN to the WAN port, and all packets from WAN
   // to the main LAN port, and let the recipient ignore the useless ones.
 
+  printf("Processing packet ... ");
+
   uint16_t dst_device;
   if (device == config.wan_device) {
     dst_device = config.lan_main_device;
