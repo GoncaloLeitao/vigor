@@ -25,7 +25,7 @@ int nf_process(uint16_t device, uint8_t **buffer, uint16_t packet_length, vigor_
   int wan_vlan = -1; // "-1" represents an access port.
   int lan_vlan = 10;
 
-  printf("Processing packet ... ");
+  printf("Processing packet ... \n");
 
   uint16_t dst_device;
 
@@ -37,7 +37,7 @@ int nf_process(uint16_t device, uint8_t **buffer, uint16_t packet_length, vigor_
     rte_ether_header->d_addr = config.endpoint_macs[dst_device];
 
     if (nf_has_rte_vlan_header(rte_ether_header)) {
-      printf("Path 1/5 = inc-wan-acs, has-hdr");
+      printf("Path 1/5 = inc-wan-acs, has-hdr\n");
       return device; //Drop
     }
 
@@ -48,7 +48,7 @@ int nf_process(uint16_t device, uint8_t **buffer, uint16_t packet_length, vigor_
     rte_ether_header->ether_type = rte_be_to_cpu_16(RTE_ETHER_TYPE_VLAN);
     vlan_header->vlan_tci = rte_cpu_to_be_16((uint16_t)lan_vlan); //TODO: Confirm Priority and CFI
 
-    printf("Path 2/5 = inc-wan-acs, no-hdr");
+    printf("Path 2/5 = inc-wan-acs, no-hdr\n");
     return dst_device;
 
   } else {
@@ -59,14 +59,14 @@ int nf_process(uint16_t device, uint8_t **buffer, uint16_t packet_length, vigor_
     rte_ether_header->d_addr = config.endpoint_macs[dst_device];
 
     if (!nf_has_rte_vlan_header(rte_ether_header)) {
-      printf("Path 3/5 = inc-lan-trk, no-hdr");
+      printf("Path 3/5 = inc-lan-trk, no-hdr\n");
       return device; //Drop
     }
 
     struct rte_vlan_hdr *rte_vlan_header = nf_then_get_rte_vlan_header(buffer);
 
     if (rte_cpu_to_be_16((uint16_t)lan_vlan) != rte_vlan_header->vlan_tci) {
-      printf("Path 4/5 = inc-lan-trk, wrong-vlan");
+      printf("Path 4/5 = inc-lan-trk, wrong-vlan\n");
       return device; //Drop
     }
 
@@ -74,7 +74,7 @@ int nf_process(uint16_t device, uint8_t **buffer, uint16_t packet_length, vigor_
     nf_shrink_chunk(buffer, 0, mbuf);
     rte_ether_header = (struct rte_ether_hdr *) nf_get_borrowed_chunk(0);
     rte_ether_header->ether_type = ether_type;
-    printf("Path 5/5 = inc-lan-trk, rmv-hdr");
+    printf("Path 5/5 = inc-lan-trk, rmv-hdr\n");
     return dst_device;
   }
 }
