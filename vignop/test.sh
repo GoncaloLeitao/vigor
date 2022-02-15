@@ -22,6 +22,8 @@ function test_nop {
         --vdev "net_tap1,iface=test_lan" \
         --no-shconf -- \
         --expire 10 \
+        --lan-dev 1 \
+        --wan 0 \
         --eth-dest 0,01:02:03:04:05:61 \
         --eth-dest 1,01:02:03:04:05:62 \
         #>/dev/null 2>/dev/null &
